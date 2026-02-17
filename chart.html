@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refurbished Mac Mini — Price Data</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #1d1d1f; padding: 2rem; }
+  h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+  .subtitle { color: #86868b; margin-bottom: 2rem; font-size: 0.95rem; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+  .chart-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .chart-card h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+  canvas { width: 100% !important; }
+  .full-width { grid-column: 1 / -1; }
+  .table-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow-x: auto; }
+  .table-card h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .chip-btn { border: 1px solid #d2d2d7; background: #fff; border-radius: 20px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
+  .chip-btn.active { background: #0071e3; color: #fff; border-color: #0071e3; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid #e5e5e5; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: #0071e3; }
+  th .arrow { font-size: 0.7rem; margin-left: 0.25rem; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0; }
+  tr:hover td { background: #f5f5f7; }
+  .savings { color: #34c759; font-weight: 600; }
+  .chip-tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .chip-M4 { background: #e8f5e9; color: #2e7d32; }
+  .chip-M4-Pro { background: #e3f2fd; color: #1565c0; }
+  .chip-M2 { background: #fff3e0; color: #e65100; }
+  .chip-M2-Pro { background: #fce4ec; color: #c62828; }
+  .chip-M1 { background: #f3e5f5; color: #6a1b9a; }
+  .chip-Intel { background: #eceff1; color: #455a64; }
+  .heatmap { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .heatmap-chip { flex: 1; min-width: 200px; }
+  .heatmap-chip h3 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .hm-grid { display: grid; gap: 2px; font-size: 0.7rem; }
+  .hm-cell { padding: 0.3rem 0.25rem; text-align: center; border-radius: 3px; min-width: 38px; }
+  .hm-header { font-weight: 600; background: none; color: #86868b; }
+  .hm-row-label { font-weight: 600; text-align: right; padding-right: 0.4rem; background: none; color: #86868b; }
+  .hm-empty { background: #f5f5f7; color: #ccc; }
+  @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Refurbished Mac Mini Pricing</h1>
+<p class="subtitle">149 products from refurb-tracker.com — 18 months of data (collected Feb 2026)</p>
+
+<div class="charts">
+  <div class="chart-card">
+    <h2>SKUs by Chip Type</h2>
+    <canvas id="skuChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Refurb Price Range by Chip</h2>
+    <canvas id="priceChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>RAM Distribution by Chip</h2>
+    <canvas id="ramChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Storage Distribution by Chip</h2>
+    <canvas id="storageChart"></canvas>
+  </div>
+  <div class="chart-card full-width">
+    <h2>Configuration Heatmap — SKUs per RAM &times; Storage</h2>
+    <div id="heatmapContainer"></div>
+  </div>
+</div>
+
+<div class="table-card">
+  <h2>All Products</h2>
+  <div class="controls" id="filters"></div>
+  <table>
+    <thead><tr id="tableHead"></tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+const DATA = [{"ref": "FMFJ3LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 319, "retailPrice": 499, "discount": 36.1, "lastSeen": "2025-12-30"}, {"ref": "G16K0LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 379, "retailPrice": null, "discount": null, "lastSeen": "2025-05-28"}, {"ref": "G16K1LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 459, "retailPrice": null, "discount": null, "lastSeen": "2025-12-30"}, {"ref": "FGNR3LL/A", "chip": "M1", "cpuCores": 8, "gpuCores": 8, "ram": "8GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 469, "retailPrice": 549, "discount": 14.6, "lastSeen": "2024-09-17"}, {"ref": "FMFK3LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 489, "retailPrice": 699, "discount": 30.0, "lastSeen": "2025-12-19"}, {"ref": "FU9D3LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 509, "retailPrice": 599, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G16K2LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 519, "retailPrice": null, "discount": null, "lastSeen": "2025-05-29"}, {"ref": "G16L0LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 519, "retailPrice": null, "discount": null, "lastSeen": "2025-09-16"}, {"ref": "FXNF2LL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 559, "retailPrice": 799, "discount": 30.0, "lastSeen": "2025-01-14"}, {"ref": "G1CF4LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 589, "retailPrice": 699, "discount": 15.7, "lastSeen": "2026-02-09"}, {"ref": "G16K3LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 599, "retailPrice": null, "discount": null, "lastSeen": "2025-07-01"}, {"ref": "G16L1LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 599, "retailPrice": null, "discount": null, "lastSeen": "2025-07-03"}, {"ref": "G16L5LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 599, "retailPrice": null, "discount": null, "lastSeen": "2025-12-19"}, {"ref": "G0ZR0LL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 619, "retailPrice": null, "discount": null, "lastSeen": "2025-01-08"}, {"ref": "FGNT3LL/A", "chip": "M1", "cpuCores": 8, "gpuCores": 8, "ram": "8GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 639, "retailPrice": 749, "discount": 14.7, "lastSeen": "2024-08-18"}, {"ref": "FU9E3LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 679, "retailPrice": 799, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1CF9LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 679, "retailPrice": 799, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G0ZR7LL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 699, "retailPrice": null, "discount": null, "lastSeen": "2025-01-15"}, {"ref": "G16L7LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 739, "retailPrice": null, "discount": null, "lastSeen": "2025-12-30"}, {"ref": "G16LBLL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 739, "retailPrice": null, "discount": null, "lastSeen": "2025-08-31"}, {"ref": "FXNG2LL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 759, "retailPrice": 1099, "discount": 30.9, "lastSeen": "2025-01-16"}, {"ref": "G0ZRXLL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 759, "retailPrice": null, "discount": null, "lastSeen": "2025-01-08"}, {"ref": "G16K4LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 759, "retailPrice": null, "discount": null, "lastSeen": "2024-12-06"}, {"ref": "G16L6LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 759, "retailPrice": null, "discount": null, "lastSeen": "2024-12-08"}, {"ref": "G1CF0LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 759, "retailPrice": 899, "discount": 15.6, "lastSeen": "2026-02-01"}, {"ref": "G1CF5LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 759, "retailPrice": 899, "discount": 15.6, "lastSeen": "2025-12-30"}, {"ref": "G16L8LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 799, "retailPrice": null, "discount": null, "lastSeen": "2025-09-11"}, {"ref": "G16LCLL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 799, "retailPrice": null, "discount": null, "lastSeen": "2025-05-29"}, {"ref": "FCYT4LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 849, "retailPrice": 999, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1CF7LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 849, "retailPrice": 999, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1CFALL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 849, "retailPrice": 999, "discount": 15.0, "lastSeen": "2026-02-10"}, {"ref": "G16L3LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 879, "retailPrice": null, "discount": null, "lastSeen": "2025-06-20"}, {"ref": "G16LDLL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 879, "retailPrice": null, "discount": null, "lastSeen": "2025-09-19"}, {"ref": "G1CF1LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 929, "retailPrice": 1099, "discount": 15.5, "lastSeen": "2026-02-01"}, {"ref": "G1CF6LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "256GB", "ethernet": "10GbE", "refurbPrice": 929, "retailPrice": 1099, "discount": 15.5, "lastSeen": "2025-11-18"}, {"ref": "G1CG0LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 929, "retailPrice": 1099, "discount": 15.5, "lastSeen": "2026-01-30"}, {"ref": "G16L4LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "8GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 939, "retailPrice": null, "discount": null, "lastSeen": "2025-06-17"}, {"ref": "G0ZRFLL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "256GB", "ethernet": "GbE", "refurbPrice": 979, "retailPrice": null, "discount": null, "lastSeen": "2025-01-11"}, {"ref": "FNH73LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 999, "retailPrice": 1299, "discount": 23.1, "lastSeen": "2025-12-10"}, {"ref": "G16L9LL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1019, "retailPrice": null, "discount": null, "lastSeen": "2025-03-13"}, {"ref": "G1CF2LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1019, "retailPrice": 1199, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1CG1LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1019, "retailPrice": 1199, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G16LELL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1039, "retailPrice": null, "discount": null, "lastSeen": "2024-11-08"}, {"ref": "G1700LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1079, "retailPrice": null, "discount": null, "lastSeen": "2025-07-29"}, {"ref": "G1CF3LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1099, "retailPrice": 1299, "discount": 15.4, "lastSeen": "2026-01-29"}, {"ref": "G1JX0LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1099, "retailPrice": 1299, "discount": 15.4, "lastSeen": "2026-01-30"}, {"ref": "G1701LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1169, "retailPrice": null, "discount": null, "lastSeen": "2025-11-28"}, {"ref": "G16LALL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "16GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1179, "retailPrice": null, "discount": null, "lastSeen": "2025-02-10"}, {"ref": "FCX44LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1189, "retailPrice": 1399, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G1CF8LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1189, "retailPrice": 1399, "discount": 15.0, "lastSeen": "2026-02-10"}, {"ref": "G1JX1LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1189, "retailPrice": 1399, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G16LGLL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1219, "retailPrice": null, "discount": null, "lastSeen": "2025-07-14"}, {"ref": "G1702LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1249, "retailPrice": null, "discount": null, "lastSeen": "2025-08-14"}, {"ref": "G170KLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1249, "retailPrice": null, "discount": null, "lastSeen": "2025-02-23"}, {"ref": "G16LFLL/A", "chip": "M2", "cpuCores": 8, "gpuCores": 10, "ram": "24GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1259, "retailPrice": null, "discount": null, "lastSeen": "2025-01-08"}, {"ref": "G1CG2LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "16GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1269, "retailPrice": 1499, "discount": 15.3, "lastSeen": "2026-02-11"}, {"ref": "G1JX2LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1269, "retailPrice": 1499, "discount": 15.3, "lastSeen": "2026-01-31"}, {"ref": "G1KZKLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1269, "retailPrice": 1499, "discount": 15.3, "lastSeen": "2026-01-30"}, {"ref": "G1709LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1339, "retailPrice": null, "discount": null, "lastSeen": "2025-11-06"}, {"ref": "G1CG3LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1359, "retailPrice": 1599, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G1KZALL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1359, "retailPrice": 1599, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1KZQLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1359, "retailPrice": 1599, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G170MLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1419, "retailPrice": null, "discount": null, "lastSeen": "2025-11-12"}, {"ref": "G170LLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1439, "retailPrice": null, "discount": null, "lastSeen": "2024-08-29"}, {"ref": "G1JV0LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1439, "retailPrice": 1699, "discount": 15.3, "lastSeen": "2025-12-30"}, {"ref": "G1JX3LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "24GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1439, "retailPrice": 1699, "discount": 15.3, "lastSeen": "2026-02-12"}, {"ref": "G1KZBLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1439, "retailPrice": 1699, "discount": 15.3, "lastSeen": "2026-02-12"}, {"ref": "G1703LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1509, "retailPrice": null, "discount": null, "lastSeen": "2025-10-05"}, {"ref": "G170BLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1509, "retailPrice": null, "discount": null, "lastSeen": "2025-11-20"}, {"ref": "G170NLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1509, "retailPrice": null, "discount": null, "lastSeen": "2025-07-16"}, {"ref": "G170ALL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1519, "retailPrice": null, "discount": null, "lastSeen": "2025-01-25"}, {"ref": "G1JV5LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1529, "retailPrice": 1799, "discount": 15.0, "lastSeen": "2026-02-02"}, {"ref": "G1JX4LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1529, "retailPrice": 1799, "discount": 15.0, "lastSeen": "2026-01-31"}, {"ref": "G1KZLLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1529, "retailPrice": 1799, "discount": 15.0, "lastSeen": "2026-02-09"}, {"ref": "G170CLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1589, "retailPrice": null, "discount": null, "lastSeen": "2025-03-26"}, {"ref": "G170VLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1589, "retailPrice": null, "discount": null, "lastSeen": "2025-09-22"}, {"ref": "G1JV6LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1609, "retailPrice": 1899, "discount": 15.3, "lastSeen": "2026-02-09"}, {"ref": "G1JX5LL/A", "chip": "M4", "cpuCores": 10, "gpuCores": 10, "ram": "32GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1609, "retailPrice": 1899, "discount": 15.3, "lastSeen": "2026-02-12"}, {"ref": "G1KZMLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1609, "retailPrice": 1899, "discount": 15.3, "lastSeen": "2026-01-30"}, {"ref": "G170WLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1679, "retailPrice": null, "discount": null, "lastSeen": "2025-06-27"}, {"ref": "G1704LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1689, "retailPrice": null, "discount": null, "lastSeen": "2025-01-12"}, {"ref": "G1JV1LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1699, "retailPrice": 1999, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G1KZCLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1699, "retailPrice": 1999, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G1KZHLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1699, "retailPrice": 1999, "discount": 15.0, "lastSeen": "2026-01-31"}, {"ref": "G1KZNLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1699, "retailPrice": 1999, "discount": 15.0, "lastSeen": "2026-01-30"}, {"ref": "G11L5LL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1739, "retailPrice": null, "discount": null, "lastSeen": "2025-01-21"}, {"ref": "G170PLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1759, "retailPrice": null, "discount": null, "lastSeen": "2025-10-16"}, {"ref": "G170XLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1759, "retailPrice": null, "discount": null, "lastSeen": "2025-11-22"}, {"ref": "G1JV2LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1779, "retailPrice": 2099, "discount": 15.2, "lastSeen": "2026-02-09"}, {"ref": "G1JVBLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1779, "retailPrice": 2099, "discount": 15.2, "lastSeen": "2026-02-01"}, {"ref": "G1KZDLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1779, "retailPrice": 2099, "discount": 15.2, "lastSeen": "2026-02-12"}, {"ref": "G1KZPLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1779, "retailPrice": 2099, "discount": 15.2, "lastSeen": "2026-01-30"}, {"ref": "G170DLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1849, "retailPrice": null, "discount": null, "lastSeen": "2025-10-24"}, {"ref": "G170YLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1849, "retailPrice": null, "discount": null, "lastSeen": "2025-11-25"}, {"ref": "G1JV3LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1869, "retailPrice": 2199, "discount": 15.0, "lastSeen": "2026-01-30"}, {"ref": "G1JV7LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 1869, "retailPrice": 2199, "discount": 15.0, "lastSeen": "2026-02-10"}, {"ref": "G1JVGLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 1869, "retailPrice": 2199, "discount": 15.0, "lastSeen": "2026-01-28"}, {"ref": "G1KZELL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "512GB", "ethernet": "GbE", "refurbPrice": 1869, "retailPrice": 2199, "discount": 15.0, "lastSeen": "2026-02-09"}, {"ref": "G170ELL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1929, "retailPrice": null, "discount": null, "lastSeen": "2025-04-25"}, {"ref": "G1JV4LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1949, "retailPrice": 2299, "discount": 15.2, "lastSeen": "2026-01-30"}, {"ref": "G1JV8LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 1949, "retailPrice": 2299, "discount": 15.2, "lastSeen": "2026-02-12"}, {"ref": "G1JVHLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 1949, "retailPrice": 2299, "discount": 15.2, "lastSeen": "2025-09-02"}, {"ref": "G1KZFLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "512GB", "ethernet": "10GbE", "refurbPrice": 1949, "retailPrice": 2299, "discount": 15.2, "lastSeen": "2026-01-28"}, {"ref": "G1705LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2019, "retailPrice": null, "discount": null, "lastSeen": "2025-11-05"}, {"ref": "G1JV9LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "1TB", "ethernet": "GbE", "refurbPrice": 2039, "retailPrice": 2399, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1JVCLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 2039, "retailPrice": 2399, "discount": 15.0, "lastSeen": "2026-02-09"}, {"ref": "G11LCLL/A", "chip": "Intel", "cpuCores": 0, "gpuCores": 0, "ram": "", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2099, "retailPrice": null, "discount": null, "lastSeen": "2025-01-11"}, {"ref": "G1706LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2099, "retailPrice": null, "discount": null, "lastSeen": "2025-11-05"}, {"ref": "G170ZLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 2099, "retailPrice": null, "discount": null, "lastSeen": "2025-02-28"}, {"ref": "G1JVALL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "1TB", "ethernet": "10GbE", "refurbPrice": 2119, "retailPrice": 2499, "discount": 15.2, "lastSeen": "2026-01-31"}, {"ref": "G1JVDLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2119, "retailPrice": 2499, "discount": 15.2, "lastSeen": "2025-12-25"}, {"ref": "G1930LL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2189, "retailPrice": null, "discount": null, "lastSeen": "2025-11-06"}, {"ref": "G1JVELL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 2209, "retailPrice": 2599, "discount": 15.0, "lastSeen": "2025-12-24"}, {"ref": "G1JVJLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 2209, "retailPrice": 2599, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1KZJLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2209, "retailPrice": 2599, "discount": 15.0, "lastSeen": "2026-02-02"}, {"ref": "G170RLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2269, "retailPrice": null, "discount": null, "lastSeen": "2025-07-24"}, {"ref": "G1JVFLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2289, "retailPrice": 2699, "discount": 15.2, "lastSeen": "2026-01-31"}, {"ref": "G1JVKLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2289, "retailPrice": 2699, "discount": 15.2, "lastSeen": "2026-01-30"}, {"ref": "G1JVNLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2289, "retailPrice": 2699, "discount": 15.2, "lastSeen": "2025-12-16"}, {"ref": "G170FLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2359, "retailPrice": null, "discount": null, "lastSeen": "2025-10-11"}, {"ref": "G1JVLLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "2TB", "ethernet": "GbE", "refurbPrice": 2379, "retailPrice": 2799, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1JVTLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2379, "retailPrice": 2799, "discount": 15.0, "lastSeen": "2026-02-12"}, {"ref": "G1JVMLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "2TB", "ethernet": "10GbE", "refurbPrice": 2459, "retailPrice": 2899, "discount": 15.2, "lastSeen": "2026-01-30"}, {"ref": "G1JVULL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2459, "retailPrice": 2899, "discount": 15.2, "lastSeen": "2025-07-03"}, {"ref": "G170GLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2539, "retailPrice": null, "discount": null, "lastSeen": "2025-01-05"}, {"ref": "G1JVPLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2549, "retailPrice": 2999, "discount": 15.0, "lastSeen": "2026-02-10"}, {"ref": "G1931LL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2609, "retailPrice": null, "discount": null, "lastSeen": "2025-10-30"}, {"ref": "G1932LL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2699, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G1JVRLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2719, "retailPrice": 3199, "discount": 15.0, "lastSeen": "2026-01-31"}, {"ref": "G1JVVLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2719, "retailPrice": 3199, "discount": 15.0, "lastSeen": "2026-02-01"}, {"ref": "G1JVQLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2799, "retailPrice": 3299, "discount": 15.2, "lastSeen": "2025-08-16"}, {"ref": "G1JVSLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2799, "retailPrice": 3299, "discount": 15.2, "lastSeen": "2025-08-03"}, {"ref": "G1JVWLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2799, "retailPrice": 3299, "discount": 15.2, "lastSeen": "2025-10-29"}, {"ref": "G1JVXLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "4TB", "ethernet": "GbE", "refurbPrice": 2889, "retailPrice": 3399, "discount": 15.0, "lastSeen": "2025-12-14"}, {"ref": "G1JVYLL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "4TB", "ethernet": "10GbE", "refurbPrice": 2969, "retailPrice": 3499, "discount": 15.1, "lastSeen": "2026-02-12"}, {"ref": "G1707LL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "16GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3039, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G1KZGLL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "24GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3229, "retailPrice": 3799, "discount": 15.0, "lastSeen": "2026-02-02"}, {"ref": "G170TLL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3289, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G170HLL/A", "chip": "M2 Pro", "cpuCores": 10, "gpuCores": 16, "ram": "32GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3379, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G170ULL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "16GB", "storage": "8TB", "ethernet": "10GbE", "refurbPrice": 3379, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G1KZ4LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3399, "retailPrice": 3999, "discount": 15.0, "lastSeen": "2026-02-03"}, {"ref": "G1KZ5LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "24GB", "storage": "8TB", "ethernet": "10GbE", "refurbPrice": 3479, "retailPrice": 4099, "discount": 15.1, "lastSeen": "2025-12-11"}, {"ref": "G1KZ0LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "48GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3569, "retailPrice": 4199, "discount": 15.0, "lastSeen": "2025-10-30"}, {"ref": "G1933LL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3629, "retailPrice": null, "discount": null, "lastSeen": "2025-03-03"}, {"ref": "G1934LL/A", "chip": "M2 Pro", "cpuCores": 12, "gpuCores": 19, "ram": "32GB", "storage": "8TB", "ethernet": "10GbE", "refurbPrice": 3719, "retailPrice": null, "discount": null, "lastSeen": "2025-12-12"}, {"ref": "G1KZ2LL/A", "chip": "M4 Pro", "cpuCores": 12, "gpuCores": 16, "ram": "64GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3739, "retailPrice": 4399, "discount": 15.0, "lastSeen": "2025-04-09"}, {"ref": "G1KZ7LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "48GB", "storage": "8TB", "ethernet": "10GbE", "refurbPrice": 3819, "retailPrice": 4499, "discount": 15.1, "lastSeen": "2025-12-16"}, {"ref": "G1KZ8LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "8TB", "ethernet": "GbE", "refurbPrice": 3909, "retailPrice": 4599, "discount": 15.0, "lastSeen": "2026-01-31"}, {"ref": "G1KZ9LL/A", "chip": "M4 Pro", "cpuCores": 14, "gpuCores": 20, "ram": "64GB", "storage": "8TB", "ethernet": "10GbE", "refurbPrice": 3989, "retailPrice": 4699, "discount": 15.1, "lastSeen": "2026-01-28"}];
+
+const CHIP_ORDER = ['M4 Pro', 'M4', 'M2 Pro', 'M2', 'M1', 'Intel'];
+const CHIP_COLORS = {
+  'M4 Pro': '#2196f3', 'M4': '#4caf50', 'M2 Pro': '#e91e63',
+  'M2': '#ff9800', 'M1': '#9c27b0', 'Intel': '#607d8b'
+};
+
+// --- SKU Bar Chart ---
+const skuCounts = {};
+CHIP_ORDER.forEach(c => skuCounts[c] = 0);
+DATA.forEach(p => skuCounts[p.chip] = (skuCounts[p.chip] || 0) + 1);
+
+new Chart(document.getElementById('skuChart'), {
+  type: 'bar',
+  data: {
+    labels: CHIP_ORDER,
+    datasets: [{
+      data: CHIP_ORDER.map(c => skuCounts[c]),
+      backgroundColor: CHIP_ORDER.map(c => CHIP_COLORS[c]),
+      borderRadius: 6,
+      barPercentage: 0.7
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.raw} SKUs` } }
+    },
+    scales: { y: { beginAtZero: true, title: { display: true, text: 'Distinct SKUs' } } }
+  }
+});
+
+// --- Price Range Chart ---
+const priceStats = {};
+CHIP_ORDER.forEach(c => priceStats[c] = { min: Infinity, max: -Infinity, sum: 0, count: 0 });
+DATA.forEach(p => {
+  const s = priceStats[p.chip];
+  if (!s) return;
+  s.min = Math.min(s.min, p.refurbPrice);
+  s.max = Math.max(s.max, p.refurbPrice);
+  s.sum += p.refurbPrice;
+  s.count++;
+});
+
+new Chart(document.getElementById('priceChart'), {
+  type: 'bar',
+  data: {
+    labels: CHIP_ORDER,
+    datasets: [
+      { label: 'Min', data: CHIP_ORDER.map(c => priceStats[c].min === Infinity ? 0 : priceStats[c].min),
+        backgroundColor: CHIP_ORDER.map(c => CHIP_COLORS[c] + '66'), borderRadius: 6, barPercentage: 0.7 },
+      { label: 'Avg', data: CHIP_ORDER.map(c => priceStats[c].count ? Math.round(priceStats[c].sum / priceStats[c].count) : 0),
+        backgroundColor: CHIP_ORDER.map(c => CHIP_COLORS[c] + 'aa'), borderRadius: 6, barPercentage: 0.7 },
+      { label: 'Max', data: CHIP_ORDER.map(c => priceStats[c].max === -Infinity ? 0 : priceStats[c].max),
+        backgroundColor: CHIP_ORDER.map(c => CHIP_COLORS[c]), borderRadius: 6, barPercentage: 0.7 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` } } },
+    scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } } }
+  }
+});
+
+// --- RAM Distribution Chart ---
+const RAM_ORDER = ['8GB', '16GB', '24GB', '32GB', '48GB', '64GB'];
+const RAM_COLORS = ['#ffcdd2','#ef9a9a','#ef5350','#e53935','#c62828','#b71c1c'];
+const ACTIVE_CHIPS = ['M4 Pro', 'M4', 'M2 Pro', 'M2']; // skip M1/Intel (too few)
+
+function buildDistribution(field, order, chips) {
+  const dist = {};
+  chips.forEach(c => { dist[c] = {}; order.forEach(v => dist[c][v] = 0); });
+  DATA.forEach(p => {
+    if (!dist[p.chip]) return;
+    const val = p[field];
+    if (order.includes(val)) dist[p.chip][val]++;
+  });
+  return dist;
+}
+
+const ramDist = buildDistribution('ram', RAM_ORDER, ACTIVE_CHIPS);
+new Chart(document.getElementById('ramChart'), {
+  type: 'bar',
+  data: {
+    labels: ACTIVE_CHIPS,
+    datasets: RAM_ORDER.map((r, i) => ({
+      label: r,
+      data: ACTIVE_CHIPS.map(c => ramDist[c][r] || 0),
+      backgroundColor: RAM_COLORS[i],
+      borderRadius: 2
+    }))
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} SKUs` } }
+    },
+    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'SKUs' } } }
+  }
+});
+
+// --- Storage Distribution Chart ---
+const STOR_ORDER = ['256GB', '512GB', '1TB', '2TB', '4TB', '8TB'];
+const STOR_COLORS = ['#bbdefb','#64b5f6','#2196f3','#1976d2','#0d47a1','#01579b'];
+
+const storDist = buildDistribution('storage', STOR_ORDER, ACTIVE_CHIPS);
+new Chart(document.getElementById('storageChart'), {
+  type: 'bar',
+  data: {
+    labels: ACTIVE_CHIPS,
+    datasets: STOR_ORDER.map((s, i) => ({
+      label: s,
+      data: ACTIVE_CHIPS.map(c => storDist[c][s] || 0),
+      backgroundColor: STOR_COLORS[i],
+      borderRadius: 2
+    }))
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw} SKUs` } }
+    },
+    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'SKUs' } } }
+  }
+});
+
+// --- Configuration Heatmap ---
+function renderHeatmap() {
+  const container = document.getElementById('heatmapContainer');
+  const html = [];
+  html.push('<div class="heatmap">');
+
+  ACTIVE_CHIPS.forEach(chip => {
+    const products = DATA.filter(p => p.chip === chip);
+    const rams = [...new Set(products.map(p => p.ram))].filter(Boolean)
+      .sort((a, b) => parseInt(a) - parseInt(b));
+    const storages = [...new Set(products.map(p => p.storage))]
+      .sort((a, b) => {
+        const na = parseInt(a) * (a.includes('TB') ? 1024 : 1);
+        const nb = parseInt(b) * (b.includes('TB') ? 1024 : 1);
+        return na - nb;
+      });
+
+    // Build counts
+    const counts = {};
+    products.forEach(p => {
+      const key = `${p.ram}|${p.storage}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const maxCount = Math.max(...Object.values(counts), 1);
+
+    const cols = storages.length + 1;
+    html.push(`<div class="heatmap-chip">`);
+    html.push(`<h3>${chip} <span style="color:#86868b;font-weight:400">(${products.length} SKUs)</span></h3>`);
+    html.push(`<div class="hm-grid" style="grid-template-columns: auto repeat(${storages.length}, 1fr)">`);
+
+    // Header row
+    html.push('<div class="hm-cell hm-header"></div>');
+    storages.forEach(s => html.push(`<div class="hm-cell hm-header">${s}</div>`));
+
+    // Data rows
+    rams.forEach(ram => {
+      html.push(`<div class="hm-cell hm-row-label">${ram}</div>`);
+      storages.forEach(stor => {
+        const count = counts[`${ram}|${stor}`] || 0;
+        const color = CHIP_COLORS[chip];
+        if (count > 0) {
+          const opacity = 0.25 + 0.75 * (count / maxCount);
+          html.push(`<div class="hm-cell" style="background:${color};opacity:${opacity.toFixed(2)};color:#fff;font-weight:600">${count}</div>`);
+        } else {
+          html.push('<div class="hm-cell hm-empty">-</div>');
+        }
+      });
+    });
+
+    html.push('</div></div>');
+  });
+
+  html.push('</div>');
+  container.innerHTML = html.join('');
+}
+renderHeatmap();
+
+// --- Data Table ---
+const columns = [
+  { key: 'chip', label: 'Chip' },
+  { key: 'ref', label: 'Ref' },
+  { key: 'ram', label: 'RAM' },
+  { key: 'storage', label: 'Storage' },
+  { key: 'ethernet', label: 'Network' },
+  { key: 'refurbPrice', label: 'Refurb $' },
+  { key: 'retailPrice', label: 'Retail $' },
+  { key: 'discount', label: 'Savings' },
+  { key: 'lastSeen', label: 'Last Seen' }
+];
+
+let activeFilter = 'All';
+let sortCol = 'refurbPrice';
+let sortAsc = true;
+
+function ramToNum(r) { return parseInt(r) || 0; }
+function storToNum(s) {
+  const n = parseInt(s) || 0;
+  return s.includes('TB') ? n * 1024 : n;
+}
+
+function sortData(data) {
+  return [...data].sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'ram') { va = ramToNum(va); vb = ramToNum(vb); }
+    else if (sortCol === 'storage') { va = storToNum(va); vb = storToNum(vb); }
+    else if (sortCol === 'chip') {
+      va = CHIP_ORDER.indexOf(va); vb = CHIP_ORDER.indexOf(vb);
+    }
+    if (va == null) va = sortAsc ? Infinity : -Infinity;
+    if (vb == null) vb = sortAsc ? Infinity : -Infinity;
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+function render() {
+  const filtered = activeFilter === 'All' ? DATA : DATA.filter(p => p.chip === activeFilter);
+  const sorted = sortData(filtered);
+
+  const head = document.getElementById('tableHead');
+  head.innerHTML = columns.map(c =>
+    `<th data-col="${c.key}">${c.label}<span class="arrow">${sortCol === c.key ? (sortAsc ? ' ▲' : ' ▼') : ''}</span></th>`
+  ).join('');
+  head.querySelectorAll('th').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+      render();
+    };
+  });
+
+  const body = document.getElementById('tableBody');
+  body.innerHTML = sorted.map(p => {
+    const cls = 'chip-' + p.chip.replace(' ', '-');
+    return `<tr>
+      <td><span class="chip-tag ${cls}">${p.chip}</span></td>
+      <td>${p.ref}</td>
+      <td>${p.ram || '—'}</td>
+      <td>${p.storage}</td>
+      <td>${p.ethernet}</td>
+      <td>$${p.refurbPrice.toLocaleString()}</td>
+      <td>${p.retailPrice ? '$' + p.retailPrice.toLocaleString() : '—'}</td>
+      <td>${p.discount ? '<span class="savings">-' + Math.abs(p.discount).toFixed(1) + '%</span>' : '—'}</td>
+      <td>${p.lastSeen}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Filter buttons
+const filtersEl = document.getElementById('filters');
+['All', ...CHIP_ORDER].forEach(chip => {
+  const btn = document.createElement('button');
+  btn.className = 'chip-btn' + (chip === 'All' ? ' active' : '');
+  btn.textContent = chip + (chip !== 'All' ? ` (${skuCounts[chip] || 0})` : ` (${DATA.length})`);
+  btn.onclick = () => {
+    activeFilter = chip;
+    filtersEl.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  };
+  filtersEl.appendChild(btn);
+});
+
+render();
+</script>
+</body>
+</html>
