@@ -1,21 +1,27 @@
 // Main entry point — loads data and renders all dashboard sections.
 // Shared helpers are in chart-helpers.js; Chart.js renderers are in charts.js.
 
-fetch('data/refurb-history.json').then(r => r.json()).then(function (history) {
-  const DATA = history.products;
-  const today = history.collectedAt;
+fetch('data/refurb-history.json')
+  .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+  .then(function (history) {
+    const DATA = history.products;
+    const today = history.collectedAt;
 
-  document.getElementById('subtitle').textContent =
-    `${DATA.length} products — updated ${today}`;
+    document.getElementById('subtitle').textContent =
+      `${DATA.length} products — updated ${today}`;
 
-  DATA.forEach(p => { p._avail = availabilityPct(p); });
+    DATA.forEach(p => { p._avail = availabilityPct(p); });
 
-  renderCatalogCharts(DATA);
-  renderConfigHeatmap(DATA);
-  renderTable(DATA, today);
-  renderTimeline(DATA, today);
-  renderPriceHistory(DATA, today);
-});
+    renderCatalogCharts(DATA);
+    renderConfigHeatmap(DATA);
+    renderTable(DATA, today);
+    renderTimeline(DATA, today);
+    renderPriceHistory(DATA, today);
+  })
+  .catch(err => {
+    document.getElementById('subtitle').textContent = 'Failed to load data.';
+    console.error('Data load error:', err);
+  });
 
 // --- Data table with sorting and chip filters ---
 
