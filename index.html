@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Refurbished Mac Mini — Price Data</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,23 +15,23 @@
 
 <div class="charts">
   <div class="chart-card">
-    <h2>SKUs by Chip Type</h2>
-    <canvas id="skuChart"></canvas>
+    <h2>Stock Volume by Scrape Day</h2>
+    <canvas id="stockVolumeChart"></canvas>
   </div>
   <div class="chart-card">
-    <h2>Refurb Price Range by Chip</h2>
-    <canvas id="priceChart"></canvas>
+    <h2>New SKU Introductions</h2>
+    <canvas id="newSkuChart"></canvas>
   </div>
   <div class="chart-card">
-    <h2>RAM Distribution by Chip</h2>
-    <canvas id="ramChart"></canvas>
+    <h2>Chip Generation Timeline</h2>
+    <canvas id="chipTimelineChart"></canvas>
   </div>
   <div class="chart-card">
-    <h2>Storage Distribution by Chip</h2>
-    <canvas id="storageChart"></canvas>
+    <h2>Scrape Coverage</h2>
+    <div id="scrapeCalendarContainer"></div>
   </div>
   <div class="chart-card full-width">
-    <h2>Configuration Heatmap — SKUs per RAM &times; Storage</h2>
+    <h2>Availability Heatmap — Scrape Days per RAM &times; Storage</h2>
     <div id="heatmapContainer"></div>
   </div>
 </div>
