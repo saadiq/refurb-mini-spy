@@ -1,6 +1,6 @@
 // Temporal insight charts and configuration heatmap
 
-function renderCatalogCharts(DATA) {
+function renderInsightCharts(DATA) {
   renderStockVolumeChart(DATA);
   renderNewSkuChart(DATA);
   renderChipTimelineChart(DATA);

@@ -19,7 +19,7 @@ Monitors Apple's refurbished Mac store for Mac Mini availability. A GitHub Actio
 
 **Data updater** (`update-data.ts`): Imports shared scraping, parses chip/RAM/storage/price from product listings, and merges into the historical JSON. Each product tracks a `sightings` array of `{date, price}` entries (deduped per day) plus `firstSeen`/`lastSeen` fields.
 
-**Dashboard** (GitHub Pages): `index.html` loads `data/refurb-history.json` at runtime. JS split into `chart-helpers.js` (shared utilities), `charts.js` (Chart.js catalog charts), and `app.js` (table, timeline, price history). Styled by `styles.css`.
+**Dashboard** (GitHub Pages): `index.html` loads `data/refurb-history.json` at runtime. JS split into `chart-helpers.js` (shared utilities), `charts.js` (temporal insight charts via Chart.js + chartjs-adapter-date-fns), and `app.js` (table, timeline, price history). Styled by `styles.css`.
 
 **Workflows**:
 - `.github/workflows/check-refurb.yml` — 15-min cron: runs check.ts, then update-data.ts, auto-commits data changes

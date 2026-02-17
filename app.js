@@ -12,7 +12,7 @@ fetch('data/refurb-history.json')
 
     DATA.forEach(p => { p._avail = availabilityPct(p); });
 
-    renderCatalogCharts(DATA);
+    renderInsightCharts(DATA);
     renderConfigHeatmap(DATA);
     renderTable(DATA, today);
     renderTimeline(DATA, today);
