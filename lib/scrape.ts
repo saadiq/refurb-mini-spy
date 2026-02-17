@@ -28,22 +28,83 @@ export async function fetchApplePage(url: string): Promise<string> {
   return res.text();
 }
 
-export function extractMacMiniProducts(html: string): Product[] {
+function isMacMini(name?: string): boolean {
+  return !!name && /mac\s*mini/i.test(name);
+}
+
+function extractFromJsonLd(html: string): Product[] {
   const pattern = /<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
   const products: Product[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(html)) !== null) {
+  for (const match of html.matchAll(pattern)) {
     try {
       const data = JSON.parse(match[1]);
-      const items = Array.isArray(data) ? data : [data];
+      const items: Product[] = Array.isArray(data) ? data : [data];
       for (const item of items) {
-        if (item["@type"] === "Product" && item.name && /mac\s*mini/i.test(item.name)) {
+        if (item["@type"] === "Product" && isMacMini(item.name)) {
           products.push(item);
         }
       }
     } catch { /* skip malformed JSON-LD */ }
   }
   return products;
+}
+
+function buildDescription(title: string, dims: Record<string, string>): string {
+  const parts: string[] = [];
+  const mem = dims.tsMemorySize?.match(/(\d+)/);
+  if (mem) parts.push(`${mem[1]}GB unified memory`);
+  const cap = dims.dimensionCapacity?.match(/(\d+)(gb|tb)/i);
+  if (cap) parts.push(`${cap[1]}${cap[2].toUpperCase()} SSD`);
+  // Title included so downstream spec parsers can extract Ethernet info
+  parts.push(title);
+  return parts.join(" · ");
+}
+
+interface BootstrapTile {
+  title?: string;
+  partNumber?: string;
+  price?: { currentPrice?: { raw_amount?: number }; priceCurrency?: string };
+  filters?: { dimensions?: Record<string, string> };
+}
+
+function tileToProduct(tile: BootstrapTile): Product {
+  const title = tile.title?.trim() ?? "";
+  const dims = tile.filters?.dimensions ?? {};
+  return {
+    name: title,
+    sku: tile.partNumber ?? "",
+    description: buildDescription(title, dims),
+    offers: {
+      price: tile.price?.currentPrice?.raw_amount,
+      priceCurrency: tile.price?.priceCurrency ?? "USD",
+    },
+  };
+}
+
+function extractFromBootstrap(html: string): Product[] {
+  const match = html.match(
+    /window\.REFURB_GRID_BOOTSTRAP\s*=\s*(\{[\s\S]*?\});\s*<\/script>/,
+  );
+  if (!match) return [];
+  try {
+    const data = JSON.parse(match[1]);
+    const tiles: BootstrapTile[] = data.tiles ?? [];
+    return tiles
+      .filter((t) => isMacMini(t.title))
+      .map(tileToProduct);
+  } catch {
+    return [];
+  }
+}
+
+export function extractMacMiniProducts(html: string): Product[] {
+  const jsonLd = extractFromJsonLd(html);
+  if (jsonLd.length > 0) {
+    console.log("Extracted products via JSON-LD");
+    return jsonLd;
+  }
+  console.log("JSON-LD had no products, falling back to REFURB_GRID_BOOTSTRAP");
+  return extractFromBootstrap(html);
 }
 
 export function getOffer(product: Product): Offer | undefined {
