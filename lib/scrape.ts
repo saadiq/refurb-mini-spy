@@ -142,7 +142,35 @@ export function parseSpecsString(description?: string): string {
   return specs.join(" · ");
 }
 
-export function parseSpecsStructured(desc?: string): { ram: string; storage: string; ethernet: string } {
+export interface ChipInfo {
+  chip: string;
+  cpuCores: number;
+  gpuCores: number;
+}
+
+export const CHIP_PATTERNS: Array<[string, RegExp]> = [
+  ["M4 Pro", /M4\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
+  ["M4", /M4.*?(\d+).core CPU.*?(\d+).core GPU/i],
+  ["M2 Pro", /M2\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
+  ["M2", /M2.*?(\d+).core CPU.*?(\d+).core GPU/i],
+  ["M1", /M1.*?(\d+).core CPU.*?(\d+).core GPU/i],
+];
+
+export function parseChip(name: string): ChipInfo {
+  for (const [chip, pattern] of CHIP_PATTERNS) {
+    const m = name.match(pattern);
+    if (m) return { chip, cpuCores: +m[1], gpuCores: +m[2] };
+  }
+  return { chip: "Intel", cpuCores: 0, gpuCores: 0 };
+}
+
+export interface SpecsInfo {
+  ram: string;
+  storage: string;
+  ethernet: string;
+}
+
+export function parseSpecsStructured(desc?: string): SpecsInfo {
   if (!desc) return { ram: "", storage: "", ethernet: "GbE" };
   const cleaned = desc.replace(/Originally released\s+\w+\s+\d{4}/, "");
   const mem = cleaned.match(/(\d+)\s*GB\s*unified\s*memory/i);

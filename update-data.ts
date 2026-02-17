@@ -1,6 +1,10 @@
 import {
-  MINI_URL, fetchApplePage, extractMacMiniProducts,
-  getPrice, parseSpecsStructured, type Product,
+  MINI_URL,
+  fetchApplePage,
+  extractMacMiniProducts,
+  getPrice,
+  parseSpecsStructured,
+  parseChip,
 } from "./lib/scrape";
 
 interface Sighting {
@@ -29,22 +33,6 @@ interface HistoryFile {
   source: string;
   products: HistoryEntry[];
   [key: string]: unknown; // allow deleting legacy keys
-}
-
-const CHIP_PATTERNS: Array<[string, RegExp]> = [
-  ["M4 Pro", /M4\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M4",     /M4.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M2 Pro", /M2\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M2",     /M2.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M1",     /M1.*?(\d+).core CPU.*?(\d+).core GPU/i],
-];
-
-function parseChip(name: string): { chip: string; cpuCores: number; gpuCores: number } {
-  for (const [chip, pattern] of CHIP_PATTERNS) {
-    const m = name.match(pattern);
-    if (m) return { chip, cpuCores: +m[1], gpuCores: +m[2] };
-  }
-  return { chip: "Intel", cpuCores: 0, gpuCores: 0 };
 }
 
 /** Migrate legacy entries that lack sightings/firstSeen */
@@ -114,9 +102,18 @@ async function main() {
       updated++;
     } else {
       const entry: HistoryEntry = {
-        ref, chip, cpuCores, gpuCores, ram, storage, ethernet,
-        refurbPrice, retailPrice: null, discount: null,
-        firstSeen: today, lastSeen: today,
+        ref,
+        chip,
+        cpuCores,
+        gpuCores,
+        ram,
+        storage,
+        ethernet,
+        refurbPrice,
+        retailPrice: null,
+        discount: null,
+        firstSeen: today,
+        lastSeen: today,
         sightings: [{ date: today, price: refurbPrice }],
       };
       byRef.set(ref, entry);
