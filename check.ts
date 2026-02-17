@@ -18,9 +18,15 @@ async function fetchRefurbishedPage(): Promise<string> {
   return res.text();
 }
 
+interface Offer {
+  price?: string | number;
+  priceCurrency?: string;
+}
+
 interface Product {
   name: string;
-  offers?: { price?: string | number; priceCurrency?: string };
+  description?: string;
+  offers?: Offer | Offer[];
 }
 
 function extractProducts(html: string): Product[] {
@@ -49,17 +55,43 @@ function filterMacMinis(products: Product[]): Product[] {
   return products.filter((p) => /mac\s*mini/i.test(p.name));
 }
 
+function getOffer(product: Product): Offer | undefined {
+  if (!product.offers) return undefined;
+  return Array.isArray(product.offers) ? product.offers[0] : product.offers;
+}
+
 function formatPrice(product: Product): string {
-  const price = product.offers?.price;
-  if (price == null) return "price unknown";
-  const currency = product.offers?.priceCurrency ?? "USD";
+  const offer = getOffer(product);
+  if (offer?.price == null) return "price unknown";
+  const currency = offer.priceCurrency ?? "USD";
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    Number(price),
+    Number(offer.price),
   );
 }
 
+function parseSpecs(description?: string): string {
+  if (!description) return "";
+  // Strip "Originally released Month YYYY" prefix that runs into specs
+  const cleaned = description.replace(/Originally released\s+\w+\s+\d{4}/, "");
+  const specs: string[] = [];
+  const mem = cleaned.match(/(\d+)GB unified memory/);
+  if (mem) specs.push(mem[1] + "GB RAM");
+  const storage = cleaned.match(/(\d+[GT]B) SSD/);
+  if (storage) specs.push(storage[1] + " SSD");
+  // The port count digit (e.g. "1") is jammed before "Gigabit" or "10 Gigabit"
+  const eth = cleaned.match(/\d*(10 Gigabit|Gigabit) Ethernet/);
+  if (eth) specs.push(eth[1] + " Ethernet");
+  const tb = cleaned.match(/((?:Three|Four|Two|\d+) Thunderbolt \d+ ports?)/);
+  if (tb) specs.push(tb[1]);
+  return specs.join(" · ");
+}
+
 function buildSlackMessage(minis: Product[]): object {
-  const lines = minis.map((p) => `• ${p.name} — ${formatPrice(p)}`);
+  const lines = minis.map((p) => {
+    const specs = parseSpecs(p.description);
+    const specLine = specs ? `\n    ${specs}` : "";
+    return `• *${formatPrice(p)}* — ${p.name}${specLine}`;
+  });
   const text = [
     `🖥️ *${minis.length} Mac Mini${minis.length > 1 ? "s" : ""} spotted on Apple Refurbished!*`,
     "",
