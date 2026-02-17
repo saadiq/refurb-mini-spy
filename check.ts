@@ -86,7 +86,7 @@ function parseSpecs(description?: string): string {
   return specs.join(" · ");
 }
 
-function buildSlackMessage(minis: Product[]): object {
+function buildSlackMessage(minis: Product[]): { text: string } {
   const lines = minis.map((p) => {
     const specs = parseSpecs(p.description);
     const specLine = specs ? `\n    ${specs}` : "";
@@ -103,7 +103,7 @@ function buildSlackMessage(minis: Product[]): object {
   return { text };
 }
 
-async function notifySlack(message: object): Promise<void> {
+async function notifySlack(message: { text: string }): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log("SLACK_WEBHOOK_URL not set — skipping Slack notification");
