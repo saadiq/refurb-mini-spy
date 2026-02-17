@@ -1,0 +1,93 @@
+export const MINI_URL = "https://www.apple.com/shop/refurbished/mac/mac-mini";
+
+export interface Offer {
+  price?: string | number;
+  priceCurrency?: string;
+}
+
+export interface Product {
+  "@type"?: string;
+  name?: string;
+  description?: string;
+  sku?: string;
+  offers?: Offer | Offer[];
+}
+
+export async function fetchApplePage(url: string): Promise<string> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Apple refurbished page: ${res.status}`);
+  }
+  return res.text();
+}
+
+export function extractMacMiniProducts(html: string): Product[] {
+  const pattern = /<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
+  const products: Product[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    try {
+      const data = JSON.parse(match[1]);
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        if (item["@type"] === "Product" && item.name && /mac\s*mini/i.test(item.name)) {
+          products.push(item);
+        }
+      }
+    } catch { /* skip malformed JSON-LD */ }
+  }
+  return products;
+}
+
+export function getOffer(product: Product): Offer | undefined {
+  if (!product.offers) return undefined;
+  return Array.isArray(product.offers) ? product.offers[0] : product.offers;
+}
+
+export function getPrice(product: Product): number | null {
+  const offer = getOffer(product);
+  if (offer?.price == null) return null;
+  return Number(offer.price);
+}
+
+export function formatPrice(product: Product): string {
+  const offer = getOffer(product);
+  if (offer?.price == null) return "price unknown";
+  const currency = offer.priceCurrency ?? "USD";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+    Number(offer.price),
+  );
+}
+
+export function parseSpecsString(description?: string): string {
+  if (!description) return "";
+  const cleaned = description.replace(/Originally released\s+\w+\s+\d{4}/, "");
+  const specs: string[] = [];
+  const mem = cleaned.match(/(\d+)GB unified memory/);
+  if (mem) specs.push(mem[1] + "GB RAM");
+  const storage = cleaned.match(/(\d+[GT]B) SSD/);
+  if (storage) specs.push(storage[1] + " SSD");
+  const eth = cleaned.match(/\d*(10 Gigabit|Gigabit) Ethernet/);
+  if (eth) specs.push(eth[1] + " Ethernet");
+  const tb = cleaned.match(/((?:Three|Four|Two|\d+) Thunderbolt \d+ ports?)/);
+  if (tb) specs.push(tb[1]);
+  return specs.join(" · ");
+}
+
+export function parseSpecsStructured(desc?: string): { ram: string; storage: string; ethernet: string } {
+  if (!desc) return { ram: "", storage: "", ethernet: "GbE" };
+  const cleaned = desc.replace(/Originally released\s+\w+\s+\d{4}/, "");
+  const mem = cleaned.match(/(\d+)\s*GB\s*unified\s*memory/i);
+  const ram = mem ? `${mem[1]}GB` : "";
+  const stor = cleaned.match(/(\d+\s*[GT]B)\s*SSD/i);
+  const storage = stor ? stor[1].replace(/\s+/g, "") : "";
+  const eth = /10\s*Gigabit\s*Ethernet/i.test(cleaned) ? "10GbE" : "GbE";
+  return { ram, storage, ethernet: eth };
+}
