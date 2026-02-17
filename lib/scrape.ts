@@ -99,7 +99,11 @@ function extractFromBootstrap(html: string): Product[] {
 
 export function extractMacMiniProducts(html: string): Product[] {
   const jsonLd = extractFromJsonLd(html);
-  if (jsonLd.length > 0) return jsonLd;
+  if (jsonLd.length > 0) {
+    console.log("Extracted products via JSON-LD");
+    return jsonLd;
+  }
+  console.log("JSON-LD had no products, falling back to REFURB_GRID_BOOTSTRAP");
   return extractFromBootstrap(html);
 }
 
