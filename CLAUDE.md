@@ -15,7 +15,7 @@ Monitors Apple's refurbished Mac store for Mac Mini availability. A GitHub Actio
 
 **Shared scraping library** (`lib/scrape.ts`): Fetches Apple's refurbished Mac Mini page, extracts JSON-LD products, and provides parsing utilities. Both scripts import from this module.
 
-**Slack monitor** (`check.ts`): Imports shared scraping, formats matching products into a Slack message, and posts via webhook.
+**Slack monitor** (`check.ts`): Imports shared scraping, filters to models meeting alert criteria (M4+ chip, 16GB+ RAM, 512GB+ storage), formats matching products into a Slack message, and posts via webhook.
 
 **Data updater** (`update-data.ts`): Imports shared scraping, parses chip/RAM/storage/price from product listings, and merges into the historical JSON. Each product tracks a `sightings` array of `{date, price}` entries (deduped per day) plus `firstSeen`/`lastSeen` fields.
 

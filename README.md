@@ -1,10 +1,18 @@
 # Refurb Mini Spy
 
-Monitors Apple's refurbished Mac store for Mac Mini availability and sends Slack notifications when they appear.
+Monitors Apple's refurbished Mac store for Mac Mini availability and sends Slack notifications when qualifying models appear.
 
 ## How It Works
 
-A GitHub Action runs every 15 minutes, scrapes product data from Apple's refurbished Mac page via JSON-LD extraction, and posts to Slack when Mac Minis are found.
+A GitHub Action runs every 15 minutes, scrapes product data from Apple's refurbished Mac page via JSON-LD extraction, and posts to Slack when Mac Minis meeting the alert criteria are found.
+
+### Alert Criteria
+
+Only models matching **all** of the following are included in notifications:
+
+- **Chip:** M4 or newer
+- **RAM:** 16GB or more
+- **Storage:** 512GB or more
 
 ## Setup
 
