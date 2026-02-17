@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refurbished Mac Mini — Price Data</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>Refurbished Mac Mini Pricing</h1>
+<p class="subtitle" id="subtitle">Loading data…</p>
+
+<div class="charts">
+  <div class="chart-card">
+    <h2>SKUs by Chip Type</h2>
+    <canvas id="skuChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Refurb Price Range by Chip</h2>
+    <canvas id="priceChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>RAM Distribution by Chip</h2>
+    <canvas id="ramChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h2>Storage Distribution by Chip</h2>
+    <canvas id="storageChart"></canvas>
+  </div>
+  <div class="chart-card full-width">
+    <h2>Configuration Heatmap — SKUs per RAM &times; Storage</h2>
+    <div id="heatmapContainer"></div>
+  </div>
+</div>
+
+<div class="table-card">
+  <h2>All Products</h2>
+  <div class="controls" id="filters"></div>
+  <table>
+    <thead><tr id="tableHead"></tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="charts" style="margin-top:2rem">
+  <div class="chart-card full-width">
+    <h2>Availability Timeline</h2>
+    <p class="section-note">Each row is a config. Colored cells = days in stock. Gaps = unavailable. Grows richer as data accumulates.</p>
+    <div class="controls" id="timelineFilters"></div>
+    <div id="timelineContainer" style="overflow-x:auto"></div>
+  </div>
+  <div class="chart-card full-width">
+    <h2>Price History</h2>
+    <p class="section-note">Price trends per config over time. Requires multiple sightings on different days to show changes.</p>
+    <div class="controls" id="priceHistoryFilters"></div>
+    <div id="priceHistoryContainer"></div>
+  </div>
+</div>
+
+<script src="chart-helpers.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
