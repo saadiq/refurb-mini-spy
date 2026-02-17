@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "check": "bun run check.ts"
+    "check": "bun run check.ts",
+    "update-data": "bun run update-data.ts"
   }
 }
