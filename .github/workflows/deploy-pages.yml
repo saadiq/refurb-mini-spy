@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'data/**'
   workflow_dispatch:
 
 permissions:
@@ -23,11 +25,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare site directory
+        run: |
+          mkdir _site
+          cp index.html styles.css app.js chart-helpers.js charts.js _site/
+          cp -r data _site/data
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - id: deployment
         uses: actions/deploy-pages@v4
