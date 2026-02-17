@@ -341,11 +341,15 @@
       "refurbPrice": 679,
       "retailPrice": 799,
       "discount": 15,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 679
+        },
+        {
+          "date": "2026-02-17",
           "price": 679
         }
       ]
@@ -581,11 +585,15 @@
       "refurbPrice": 849,
       "retailPrice": 999,
       "discount": 15,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 849
+        },
+        {
+          "date": "2026-02-17",
           "price": 849
         }
       ]
@@ -601,11 +609,15 @@
       "refurbPrice": 849,
       "retailPrice": 999,
       "discount": 15,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 849
+        },
+        {
+          "date": "2026-02-17",
           "price": 849
         }
       ]
@@ -825,11 +837,15 @@
       "refurbPrice": 1019,
       "retailPrice": 1199,
       "discount": 15,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 1019
+        },
+        {
+          "date": "2026-02-17",
           "price": 1019
         }
       ]
@@ -2033,11 +2049,15 @@
       "refurbPrice": 1949,
       "retailPrice": 2299,
       "discount": 15.2,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 1949
+        },
+        {
+          "date": "2026-02-17",
           "price": 1949
         }
       ]
@@ -2213,11 +2233,15 @@
       "refurbPrice": 2119,
       "retailPrice": 2499,
       "discount": 15.2,
-      "lastSeen": "2026-01-31",
+      "lastSeen": "2026-02-17",
       "firstSeen": "2026-01-31",
       "sightings": [
         {
           "date": "2026-01-31",
+          "price": 2119
+        },
+        {
+          "date": "2026-02-17",
           "price": 2119
         }
       ]
