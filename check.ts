@@ -18,9 +18,8 @@ function parseStorageGB(storage: string): number {
 }
 
 function meetsAlertCriteria(product: Product): boolean {
-  const { chip } = parseChip(product.name || "");
-  const gen = chip.match(/M(\d+)/);
-  if (!gen || +gen[1] < 4) return false;
+  const { generation } = parseChip(product.name || "");
+  if (generation < 4) return false;
 
   const specs = parseSpecsStructured(product.description);
   const ram = specs.ram.match(/(\d+)/);

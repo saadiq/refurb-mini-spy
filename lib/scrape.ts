@@ -144,24 +144,26 @@ export function parseSpecsString(description?: string): string {
 
 export interface ChipInfo {
   chip: string;
+  generation: number;
   cpuCores: number;
   gpuCores: number;
 }
 
-export const CHIP_PATTERNS: Array<[string, RegExp]> = [
-  ["M4 Pro", /M4\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M4", /M4.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M2 Pro", /M2\s*Pro.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M2", /M2.*?(\d+).core CPU.*?(\d+).core GPU/i],
-  ["M1", /M1.*?(\d+).core CPU.*?(\d+).core GPU/i],
+const CHIP_VARIANT_PATTERNS: Array<[string, RegExp]> = [
+  ["Pro", /M(\d+)\s*Pro[-\s]*(\d+)[-\s]*core CPU[-\s]*(\d+)[-\s]*core GPU/i],
+  ["", /M(\d+)[-\s]*(\d+)[-\s]*core CPU[-\s]*(\d+)[-\s]*core GPU/i],
 ];
 
 export function parseChip(name: string): ChipInfo {
-  for (const [chip, pattern] of CHIP_PATTERNS) {
+  for (const [variant, pattern] of CHIP_VARIANT_PATTERNS) {
     const m = name.match(pattern);
-    if (m) return { chip, cpuCores: +m[1], gpuCores: +m[2] };
+    if (m) {
+      const generation = +m[1];
+      const chip = variant ? `M${generation} ${variant}` : `M${generation}`;
+      return { chip, generation, cpuCores: +m[2], gpuCores: +m[3] };
+    }
   }
-  return { chip: "Intel", cpuCores: 0, gpuCores: 0 };
+  return { chip: "Intel", generation: 0, cpuCores: 0, gpuCores: 0 };
 }
 
 export interface SpecsInfo {
