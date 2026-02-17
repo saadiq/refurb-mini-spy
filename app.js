@@ -43,7 +43,7 @@ function renderTable(DATA, today) {
   ];
 
   let activeFilter = 'All';
-  let sortCol = 'refurbPrice';
+  let sortCol = 'freshness';
   let sortAsc = true;
 
   function sortValue(p, col) {
