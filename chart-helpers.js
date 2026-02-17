@@ -13,6 +13,8 @@ const CHIP_COLORS = {
 
 const ACTIVE_CHIPS = ['M4 Pro', 'M4', 'M2 Pro', 'M2'];
 
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86400000);
 }
