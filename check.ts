@@ -1,7 +1,33 @@
 import {
-  MINI_URL, fetchApplePage, extractMacMiniProducts,
-  formatPrice, parseSpecsString, type Product,
+  MINI_URL,
+  fetchApplePage,
+  extractMacMiniProducts,
+  formatPrice,
+  parseSpecsString,
+  parseChip,
+  parseSpecsStructured,
+  type Product,
 } from "./lib/scrape";
+
+function parseStorageGB(storage: string): number {
+  const tb = storage.match(/(\d+)\s*TB/i);
+  if (tb) return +tb[1] * 1024;
+  const gb = storage.match(/(\d+)\s*GB/i);
+  if (gb) return +gb[1];
+  return 0;
+}
+
+function meetsAlertCriteria(product: Product): boolean {
+  const { chip } = parseChip(product.name || "");
+  const gen = chip.match(/M(\d+)/);
+  if (!gen || +gen[1] < 4) return false;
+
+  const specs = parseSpecsStructured(product.description);
+  const ram = specs.ram.match(/(\d+)/);
+  if (!ram || +ram[1] < 16) return false;
+
+  return parseStorageGB(specs.storage) >= 512;
+}
 
 function buildSlackMessage(minis: Product[]): { text: string } {
   const lines = minis.map((p) => {
@@ -45,11 +71,17 @@ async function main() {
   console.log("Fetching Apple refurbished Mac Mini page...");
   const html = await fetchApplePage(MINI_URL);
 
-  const minis = extractMacMiniProducts(html);
-  console.log(`Found ${minis.length} Mac Mini(s)`);
+  const allMinis = extractMacMiniProducts(html);
+  console.log(`Found ${allMinis.length} Mac Mini(s)`);
+
+  const minis = allMinis.filter(meetsAlertCriteria);
+  const filtered = allMinis.length - minis.length;
+  if (filtered > 0) {
+    console.log(`Filtered out ${filtered} model(s) not meeting criteria (M4+, 16GB+, 512GB+)`);
+  }
 
   if (minis.length === 0) {
-    console.log("No Mac Minis found. Exiting.");
+    console.log("No qualifying Mac Minis found. Exiting.");
     return;
   }
 
