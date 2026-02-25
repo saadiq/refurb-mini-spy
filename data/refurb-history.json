@@ -201,7 +201,7 @@
       "refurbPrice": 589,
       "retailPrice": 699,
       "discount": 15.7,
-      "lastSeen": "2026-02-18",
+      "lastSeen": "2026-02-25",
       "firstSeen": "2026-02-09",
       "sightings": [
         {
@@ -210,6 +210,10 @@
         },
         {
           "date": "2026-02-18",
+          "price": 589
+        },
+        {
+          "date": "2026-02-25",
           "price": 589
         }
       ]
@@ -349,7 +353,7 @@
       "refurbPrice": 679,
       "retailPrice": 799,
       "discount": 15,
-      "lastSeen": "2026-02-21",
+      "lastSeen": "2026-02-25",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
@@ -370,6 +374,10 @@
         },
         {
           "date": "2026-02-21",
+          "price": 679
+        },
+        {
+          "date": "2026-02-25",
           "price": 679
         }
       ]
@@ -937,7 +945,7 @@
       "refurbPrice": 1019,
       "retailPrice": 1199,
       "discount": 15,
-      "lastSeen": "2026-02-21",
+      "lastSeen": "2026-02-25",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
@@ -954,6 +962,10 @@
         },
         {
           "date": "2026-02-21",
+          "price": 1019
+        },
+        {
+          "date": "2026-02-25",
           "price": 1019
         }
       ]
@@ -1289,7 +1301,7 @@
       "refurbPrice": 1269,
       "retailPrice": 1499,
       "discount": 15.3,
-      "lastSeen": "2026-02-20",
+      "lastSeen": "2026-02-25",
       "firstSeen": "2026-01-31",
       "sightings": [
         {
@@ -1302,6 +1314,10 @@
         },
         {
           "date": "2026-02-20",
+          "price": 1269
+        },
+        {
+          "date": "2026-02-25",
           "price": 1269
         }
       ]
@@ -1389,7 +1405,7 @@
       "refurbPrice": 1359,
       "retailPrice": 1599,
       "discount": 15,
-      "lastSeen": "2026-02-20",
+      "lastSeen": "2026-02-25",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
@@ -1406,6 +1422,10 @@
         },
         {
           "date": "2026-02-20",
+          "price": 1359
+        },
+        {
+          "date": "2026-02-25",
           "price": 1359
         }
       ]
