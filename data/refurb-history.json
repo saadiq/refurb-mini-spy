@@ -2901,11 +2901,15 @@
       "refurbPrice": 2379,
       "retailPrice": 2799,
       "discount": 15,
-      "lastSeen": "2026-02-12",
+      "lastSeen": "2026-03-10",
       "firstSeen": "2026-02-12",
       "sightings": [
         {
           "date": "2026-02-12",
+          "price": 2379
+        },
+        {
+          "date": "2026-03-10",
           "price": 2379
         }
       ]
