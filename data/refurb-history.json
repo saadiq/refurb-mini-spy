@@ -1625,7 +1625,7 @@
       "refurbPrice": 1359,
       "retailPrice": 1599,
       "discount": 15,
-      "lastSeen": "2026-03-10",
+      "lastSeen": "2026-03-11",
       "firstSeen": "2026-02-01",
       "sightings": [
         {
@@ -1638,6 +1638,10 @@
         },
         {
           "date": "2026-03-10",
+          "price": 1359
+        },
+        {
+          "date": "2026-03-11",
           "price": 1359
         }
       ]
